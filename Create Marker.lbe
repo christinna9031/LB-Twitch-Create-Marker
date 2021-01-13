@@ -1,0 +1,43 @@
+[extension_name]
+Create Marker
+[insert_external]
+<div><p>Create Marker extension is installed</div></p>
+[insert_command]
+lioranboardclient.send('{"type":"MESSAGE","topic":"ExtensionCommand","name":"Create Marker","boxcount":3,"boxname1":"oauth_token","boxtype1":"string","boxname2":"channel_id","boxtype2":"string","boxname3":"description","boxtype3":"string"}');
+[insert_hook]
+case "CreateMarker":{
+	LBCreateMarker(LioranBoardJSON.oauth_token,LioranBoardJSON.channel_id,LioranBoardJSON.description);
+}break
+[insert_script]
+function LBCreateMarker(oauthtoken,channelid,description){
+    let desctrimmed = description.substring(0, 140);
+    
+        const PostMarker = fetch("https://api.twitch.tv/helix/streams/markers?user_id=" + channelid + "&description=" + desctrimmed, {
+        "method": "POST",
+        "headers":{
+            "Client-ID": TWITCH_CLIENT_ID,
+            "Authorization": "Bearer " + oauthtoken,
+        "Content-Type": "application/json"
+        }
+          });
+            
+          PostMarker.then(response => { 
+          return ((response.json()))
+          })
+        
+          .then(data => {
+        //console.log(data)
+      if (data.status == 200){
+            lioranboardclient.send('{"type":"MESSAGE","topic":"AlertMessage","message":"Marker created!"}')
+            }
+            else if (data.status == 404) {
+            lioranboardclient.send('{"type":"MESSAGE","topic":"AlertMessage","message":"Error creating marker: Wrong channel ID or stream is offline."}')
+        } 
+        else {
+            let error = "Error creating marker: "+data.message
+            lioranboardclient.send('{"type":"MESSAGE","topic":"AlertMessage","message":"'+error+'"}')
+        }
+           
+          });
+    }
+[insert_over]
